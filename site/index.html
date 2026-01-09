@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlorindoDev OS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="desktop">
+        <!-- Desktop Icons will be rendered here by JS -->
+        <div id="desktop-icons-container"></div>
+
+        <!-- Windows will be rendered here by JS -->
+        <div id="window-layer"></div>
+    </div>
+
+    <div id="taskbar">
+        <div class="taskbar-start">
+            <button id="start-btn"><i class="fa-brands fa-windows"></i></button>
+        </div>
+        <div class="taskbar-apps" id="taskbar-apps">
+            <!-- Open apps will appear here -->
+        </div>
+        <div class="taskbar-tray">
+            <div class="tray-icon"><i class="fa-solid fa-wifi"></i></div>
+            <div class="tray-icon"><i class="fa-solid fa-volume-high"></i></div>
+            <div class="tray-clock" id="clock">12:00 AM</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/apps.js"></script>
+    <script src="assets/js/os.js"></script>
+    <script>
+        // Initialize OS
+        document.addEventListener('DOMContentLoaded', () => {
+            const os = new OperatingSystem();
+            os.init();
+        });
+    </script>
+</body>
+
+</html>
