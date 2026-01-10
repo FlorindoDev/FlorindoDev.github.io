@@ -1,0 +1,87 @@
+/* Taskbar */
+#taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 48px;
+    background: var(--taskbar-bg);
+    backdrop-filter: blur(15px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    z-index: 1000;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.taskbar-start #start-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.taskbar-start #start-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.taskbar-apps {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding-left: 10px;
+}
+
+.taskbar-app {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: transparent;
+    transition: background 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.taskbar-app:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.taskbar-app.active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.taskbar-app.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 16px;
+    height: 3px;
+    background: var(--accent-color);
+    border-radius: 2px;
+}
+
+.taskbar-app i {
+    font-size: 20px;
+    color: #fff;
+}
+
+.taskbar-tray {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 12px;
+    padding-right: 10px;
+}
+
+.tray-icon {
+    cursor: pointer;
+}

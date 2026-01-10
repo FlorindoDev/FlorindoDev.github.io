@@ -1,0 +1,93 @@
+/* Window System */
+.window {
+    position: absolute;
+    background: var(--window-bg);
+    border: var(--glass-border);
+    border-radius: 8px;
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+    height: 400px;
+    min-width: 120px;
+    min-height: 120px;
+    resize: both;
+    overflow: hidden;
+    animation: openWindow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes openWindow {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.window.minimized {
+    display: none;
+}
+
+.window-header {
+    height: 32px;
+    background: var(--window-header-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    cursor: default;
+    /* Handles rendering context for drag */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.window-title {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.window-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-close {
+    background: #ff5f57;
+}
+
+.btn-min {
+    background: #febc2e;
+}
+
+.btn-max {
+    background: #28c840;
+}
+
+.window-content {
+    flex: 1;
+    overflow: auto;
+    padding: 0;
+    position: relative;
+    color: #eee;
+}
+
+/* Basic Content Styling inside Windows */
+.window-content h1,
+.window-content h2,
+.window-content p {
+    padding: 10px;
+}

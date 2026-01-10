@@ -12,10 +12,7 @@
 
 <body>
     <div id="desktop">
-        <!-- Desktop Icons will be rendered here by JS -->
         <div id="desktop-icons-container"></div>
-
-        <!-- Windows will be rendered here by JS -->
         <div id="window-layer"></div>
     </div>
 
@@ -24,7 +21,6 @@
             <button id="start-btn"><i class="fa-brands fa-windows"></i></button>
         </div>
         <div class="taskbar-apps" id="taskbar-apps">
-            <!-- Open apps will appear here -->
         </div>
         <div class="taskbar-tray">
             <div class="tray-icon"><i class="fa-solid fa-wifi"></i></div>
@@ -36,8 +32,8 @@
     <!-- Scripts -->
     <script src="assets/js/apps.js"></script>
     <script src="assets/js/os.js"></script>
+    <script src="assets/js/WindowMenager.js"></script>
     <script>
-        // Initialize OS
         document.addEventListener('DOMContentLoaded', () => {
             const os = new OperatingSystem();
             os.init();
