@@ -304,6 +304,16 @@ class WindowMenager {
             data: app
         };
 
+        // If it's a folder, ensure listeners are attached after a short tick
+        if (app.type === 'folder') {
+            setTimeout(() => {
+                // Re-find the element in case? No, win is ref.
+                // We need to call setupExplorerListeners but likely need to handle it inside renderFileExplorer 
+                // but since render returns string, we need to pass the ID.
+                // Actually renderFileExplorer sets the timeout itself now.
+            }, 50);
+        }
+
         this.addWindowListeners(win, appId);
         this.addResizeListeners(win);
         this.addToTaskbar(app);
@@ -311,24 +321,42 @@ class WindowMenager {
     }
 
     getAppContent(app) {
-        if (app.type === 'folder') {
-            return this.renderFileExplorer(app.content);
+        if (app.type === 'folder' || app.type === 'project-folder') {
+            return this.renderFileExplorer(app);
         }
         return app.content;
     }
 
-    renderFileExplorer(content) {
-        let itemsHtml = content.map(item => `
-            <div class="folder-item">
+    renderFileExplorer(folderData) {
+        const content = folderData.content || [];
+        const isProject = folderData.type === 'project-folder';
+
+        // Items Grid
+        let itemsHtml = content.map((item, index) => {
+            // Add click/dblclick handlers via ID later, or inline for simplicity in string
+            // For now we set data attributes to handle clicks
+            return `
+            <div class="folder-item" data-index="${index}" data-type="${item.type}">
                 <i class="${item.icon} folder-icon"></i>
                 <div class="folder-name">${item.name}</div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
-        return `
-            <div class="file-explorer">
+        // Preview Pane Content
+        // Always start empty, wait for user to click README
+        let previewHtml = `
+            <div class="preview-empty">
+                <i class="fa-brands fa-markdown" style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
+                <p>Select README.md to view details</p>
+            </div>
+        `;
+
+        const html = `
+            <div class="file-explorer" id="explorer-${folderData.id || Date.now()}">
                 <div class="sidebar">
                     <div class="sidebar-item active"><i class="fa-solid fa-desktop"></i> Desktop</div>
+                     <div class="sidebar-item"><i class="fa-solid fa-folder-open"></i> My Projects</div>
                     <div class="sidebar-item"><i class="fa-solid fa-download"></i> Downloads</div>
                     <div class="sidebar-item"><i class="fa-solid fa-file"></i> Documents</div>
                     <div class="sidebar-item"><i class="fa-solid fa-image"></i> Pictures</div>
@@ -337,8 +365,140 @@ class WindowMenager {
                 <div class="folder-grid">
                     ${itemsHtml}
                 </div>
+                <div class="preview-pane">
+                    ${previewHtml}
+                </div>
             </div>
         `;
+
+        // We need to attach listeners *after* rendering. 
+        // Since this returns string, the caller 'openWindow' appends it.
+        // We'll trust openWindow to add the logic? No, openWindow is generic.
+        // We should add a small delay or use a mutation observer, OR better:
+        // openWindow should call a method 'afterRender' if it exists.
+        // But for now, let's delegate clicks to the window content in 'setupExplorerListeners'
+        // We'll call this manually from openWindow if we detect it's a folder.
+
+        // HACK: We can't easily attach listeners here as it returns string.
+        // We'll attach a global or window-scoped listener in 'openWindow' or 'addWindowListeners' 
+        // that handles .folder-item clicks dynamically.
+        setTimeout(() => {
+            this.setupExplorerListeners(folderData);
+        }, 0);
+
+        return html;
+    }
+
+    renderPreviewPane(data) {
+        const meta = data.meta;
+        const techTags = meta.techStack.map(tag => `<span class="tech-tag">${tag}</span>`).join('');
+        const features = meta.features.map(feat => `<li><i class="fa-solid fa-check"></i> ${feat}</li>`).join('');
+
+        return `
+            <div class="preview-header">
+                <h2>${data.name}</h2>
+            </div>
+            <div class="preview-desc">
+                ${meta.description}
+            </div>
+
+            <div class="preview-section">
+                <h3><i class="fa-solid fa-code"></i> Tech Stack</h3>
+                <div class="tech-tags">
+                    ${techTags}
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <h3><i class="fa-solid fa-star"></i> Key Features</h3>
+                <ul class="feature-list">
+                    ${features}
+                </ul>
+            </div>
+
+            <div class="preview-actions">
+                <a href="${meta.githubUrl}" target="_blank" class="btn-github">
+                    <i class="fa-brands fa-github"></i> View on GitHub
+                </a>
+            </div>
+        `;
+    }
+
+    setupExplorerListeners(currentFolder) {
+        // Find the active window content 
+        // This is a bit tricky if we have multiple, but assuming dragging logic handles basic stuff
+        // We need to find the specific explorer container.
+        // Let's use the ID we generated or just find the last opened window?
+        // Better: add specific listener to the generated HTML in 'openWindow' logic.
+
+        // Revised approach: We will handle clicks in 'addWindowListeners' or by delegating to the window text.
+        // But we need to know WHICH data to navigate to.
+
+        // Let's attach the data to the DOM elements if possible, or lookup from 'apps'.
+
+        const explorer = document.getElementById(`explorer-${currentFolder.id}`);
+        if (!explorer) return; // Might not be inserted yet
+
+        const items = explorer.querySelectorAll('.folder-item');
+        const previewPane = explorer.querySelector('.preview-pane');
+
+        items.forEach(item => {
+            item.addEventListener('dblclick', (e) => {
+                const index = item.dataset.index;
+                const type = item.dataset.type;
+                const selectedItem = currentFolder.content[index];
+
+                // Block navigation if inside a project folder
+                if (currentFolder.type === 'project-folder') {
+                    return;
+                }
+
+                if (type === 'project-folder' || type === 'folder') {
+                    // Navigate!
+                    this.navigateTo(selectedItem, explorer.closest('.window'));
+                }
+            });
+
+            item.addEventListener('click', (e) => {
+                // Selection styled
+                items.forEach(el => el.classList.remove('selected'));
+                item.classList.add('selected');
+
+                // Handle Preview Logic
+                const index = item.dataset.index;
+                const selectedItem = currentFolder.content[index];
+
+                // Logic: If inside project-folder AND clicked README.md -> Show Preview
+                if (currentFolder.type === 'project-folder') {
+                    if (selectedItem.name.toLowerCase() === 'readme.md') {
+                        previewPane.innerHTML = this.renderPreviewPane(currentFolder);
+                    } else {
+                        // Reset to empty or maybe show generic file info?
+                        previewPane.innerHTML = `
+                           <div class="preview-empty">
+                               <div style="text-align: center;">
+                                   <i class="${selectedItem.icon}" style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
+                                   <p>${selectedItem.name}</p>
+                                   <span style="font-size: 12px; opacity: 0.7;">No preview available</span>
+                               </div>
+                           </div>
+                        `;
+                    }
+                }
+            });
+        });
+    }
+
+    navigateTo(folder, windowElement) {
+        // Re-render content
+        const newContent = this.renderFileExplorer(folder);
+        const contentArea = windowElement.querySelector('.window-content');
+        if (contentArea) {
+            contentArea.innerHTML = newContent;
+            // Update Title
+            const title = windowElement.querySelector('.window-title');
+            title.innerHTML = `<i class="${folder.icon}"></i> ${folder.name}`;
+        }
     }
 
 

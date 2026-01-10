@@ -2,61 +2,210 @@
 .file-explorer {
     display: flex;
     height: 100%;
+    /* Use Grid for stricter layout if preferred, but Flex works well for resizable panes if we added that too.
+       For now, user asked for fixed structure as shown */
+    display: grid;
+    grid-template-columns: 200px 1fr 300px;
+    /* Sidebar | Files | Preview */
 }
 
+/* Sidebar */
 .sidebar {
-    width: 150px;
-    background: rgba(0, 0, 0, 0.2);
+    width: 100%;
+    background: rgba(30, 30, 30, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     padding: 10px 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .sidebar-item {
     padding: 8px 15px;
+    font-size: 13px;
+    color: #ccc;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 13px;
     transition: background 0.2s;
 }
 
-.sidebar-item:hover,
-.sidebar-item.active {
+.sidebar-item:hover {
     background: rgba(255, 255, 255, 0.05);
+    color: #fff;
 }
 
+.sidebar-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-left: 2px solid #6eb4f7;
+}
+
+.sidebar-item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Main Content (Folder Grid) */
 .folder-grid {
-    flex: 1;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
     align-content: flex-start;
+    gap: 10px;
+    overflow-y: auto;
+    /* Background for main area */
 }
 
 .folder-item {
+    width: 80px;
+    height: 90px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px;
+    justify-content: flex-start;
+    cursor: default;
     border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid transparent;
 }
 
 .folder-item:hover {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.folder-item.selected {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .folder-icon {
-    font-size: 48px;
+    font-size: 32px;
+    margin-bottom: 8px;
     color: var(--folder-color);
-    margin-bottom: 5px;
 }
 
 .folder-name {
+    font-size: 11px;
+    word-break: break-word;
+    line-height: 1.3;
+    max-height: 2.6em;
+    overflow: hidden;
+    color: #eee;
+}
+
+/* Preview Pane */
+.preview-pane {
+    background: rgba(20, 20, 20, 0.5);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: -10px;
+}
+
+.preview-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.preview-desc {
     font-size: 13px;
-    text-align: center;
+    line-height: 1.5;
+    color: #ccc;
+}
+
+.preview-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tech-tag {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Optional Colored tags based on content if we want via JS or nth-child, keeping simple for now */
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+}
+
+.feature-list li {
+    font-size: 13px;
+    color: #ccc;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.feature-list li i {
+    color: #28c840;
+    font-size: 10px;
+}
+
+.preview-actions {
+    margin-top: auto;
+}
+
+.btn-github {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-github:hover {
+    background: #0064b0;
+}
+
+/* Empty state for preview */
+.preview-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+    font-size: 14px;
+    font-style: italic;
 }
