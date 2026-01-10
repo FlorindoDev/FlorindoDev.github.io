@@ -77,29 +77,125 @@ class WindowMenager {
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
 
-        header.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.window-controls')) return; // Don't drag if clicking controls
+        const startDrag = (e) => {
+            if (e.target.closest('.window-controls')) return;
+            if (e.target.closest('.resizer')) return; // Don't drag if clicking resizers
+
+            // Check if touch or mouse
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
+            startX = clientX;
+            startY = clientY;
             initialLeft = win.offsetLeft;
             initialTop = win.offsetTop;
 
             this.focusWindow(appId);
-        });
+        };
 
-        document.addEventListener('mousemove', (e) => {
+        const onDrag = (e) => {
             if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            e.preventDefault(); // Prevent scrolling on touch
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
             win.style.left = `${initialLeft + dx}px`;
             win.style.top = `${initialTop + dy}px`;
+        };
+
+        const stopDrag = () => {
+            isDragging = false;
+        };
+
+        header.addEventListener('mousedown', startDrag);
+        header.addEventListener('touchstart', startDrag, { passive: false });
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('touchmove', onDrag, { passive: false });
+
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+    }
+
+    addResizeListeners(win) {
+        const resizers = win.querySelectorAll('.resizer');
+        let isResizing = false;
+        let currentResizer = null;
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
+
+        const startResize = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            isResizing = true;
+            currentResizer = e.target;
+            startX = clientX;
+            startY = clientY;
+
+            const rect = win.getBoundingClientRect();
+            startWidth = rect.width;
+            startHeight = rect.height;
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            // Remove transitions during resize
+            win.style.transition = 'none';
+        };
+
+        const onResize = (e) => {
+            if (!isResizing) return;
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
+
+            // Determine which resizer is active based on class
+            const classList = currentResizer.classList;
+
+            if (classList.contains('resizer-e') || classList.contains('resizer-ne') || classList.contains('resizer-se')) {
+                win.style.width = `${startWidth + dx}px`;
+            }
+
+            if (classList.contains('resizer-s') || classList.contains('resizer-se') || classList.contains('resizer-sw')) {
+                win.style.height = `${startHeight + dy}px`;
+            }
+
+            if (classList.contains('resizer-w') || classList.contains('resizer-nw') || classList.contains('resizer-sw')) {
+                win.style.width = `${startWidth - dx}px`;
+                win.style.left = `${startLeft + dx}px`;
+            }
+
+            if (classList.contains('resizer-n') || classList.contains('resizer-ne') || classList.contains('resizer-nw')) {
+                win.style.height = `${startHeight - dy}px`;
+                win.style.top = `${startTop + dy}px`;
+            }
+        };
+
+        const stopResize = () => {
+            if (isResizing) {
+                isResizing = false;
+                win.style.transition = ''; // Restore transition if any
+            }
+        };
+
+        resizers.forEach(resizer => {
+            resizer.addEventListener('mousedown', startResize);
+            resizer.addEventListener('touchstart', startResize, { passive: false });
         });
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
+        document.addEventListener('mousemove', onResize);
+        document.addEventListener('touchmove', onResize, { passive: false });
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchend', stopResize);
     }
 
     closeWindow(appId) {
@@ -164,8 +260,15 @@ class WindowMenager {
         const win = document.createElement('div');
         win.className = 'window';
         win.dataset.id = appId;
-        win.style.left = '90px';
-        win.style.top = '90px';
+        if (window.innerWidth < 768) {
+            win.style.left = '5%';
+            win.style.top = '10%';
+            // Initial size handled by CSS for mobile often, but good to set default if needed
+            // But CSS has !important for mobile so JS values might be overridden which is fine
+        } else {
+            win.style.left = '90px';
+            win.style.top = '90px';
+        }
         win.style.zIndex = this.zIndexCounter++;
 
         // Window Structure
@@ -183,6 +286,16 @@ class WindowMenager {
             <div class="window-content">
                 ${this.getAppContent(app)}
             </div>
+            
+            <!-- Resize Handles -->
+            <div class="resizer resizer-n"></div>
+            <div class="resizer resizer-e"></div>
+            <div class="resizer resizer-s"></div>
+            <div class="resizer resizer-w"></div>
+            <div class="resizer resizer-ne"></div>
+            <div class="resizer resizer-nw"></div>
+            <div class="resizer resizer-se"></div>
+            <div class="resizer resizer-sw"></div>
         `;
 
         this.windowLayer.appendChild(win);
@@ -192,6 +305,7 @@ class WindowMenager {
         };
 
         this.addWindowListeners(win, appId);
+        this.addResizeListeners(win);
         this.addToTaskbar(app);
         this.focusWindow(appId);
     }
